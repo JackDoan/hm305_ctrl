@@ -1,9 +1,9 @@
 import logging
-from enum import IntEnum
+from enum import IntEnum, auto
 import serial
 
-from hm305.floatsetting import FloatSetting
 from modbus import Modbus
+from hm305.floatsetting import FloatSetting
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 class HM305:
     class CMD(IntEnum):
         Output = 0x0001  # (R/W)
-        ProtectionStatus = 0x0002  # (R), bit field of "isOVP, isOCP, isOPP, isOTP, isSCP"
+        ProtectionStatus = (
+            0x0002  # (R), bit field of "isOVP, isOCP, isOPP, isOTP, isSCP"
+        )
         ModelNum = 0x0003  # (R)
         Class_detail = 0x0004  # (R) # returns "KP". Perhaps is ClassTemplate in DevicesClassInfo.xml?
         Decimals = 0x0005  # (R) # returns 0x233 == scale factors for V/A/P
@@ -25,7 +27,9 @@ class HM305:
         Set_Voltage = 0x0030
         Set_Current = 0x0031
         Set_Time_span = 0x0032
-        Power_state = 0x8801  # "device power on status address, 2 bytes / Device boot state"
+        Power_state = (
+            0x8801  # "device power on status address, 2 bytes / Device boot state"
+        )
         Default_show = 0x8802  # "default value display addr"
         SCP = 0x8803  # short-circuit protection
         Buzzer = 0x8804
@@ -36,17 +40,78 @@ class HM305:
         Current_Min = 0xC120  # returns 21 on my HM310P = 0.021A?
         Current_Max = 0xC12E  # returns 10100 on my HM310p = 10.1A
 
+    class PRESET(auto):
+        """
+        M1 - M6 Memory key registers
+        Factory defaults :-
+           Volts: (1, 3, 5, 7, 9,10) / 10 * (UH =  3200) => (320,960,1600,2240,2880,3200)
+           Amps: (1, 3, 5, 7, 9,10) / 10 * (UL = 10100) => (1010,3030,5050,7070,9090,10100)
+           Seconds: 10,11,12,13,14,15
+           Enabled:  1, 1, 1, 1, 1, 1
+        """
+
+        Memory = {
+            "M1": {
+                "Volts": 0x1000,  # (R/W)
+                "Amps": 0x1001,  # (R/W)
+                "Time_span": 0x1002,  # (R/W)
+                "Enabled": 0x1003,  # (R/W)
+            },
+            "M2": {
+                "Volts": 0x1010,  # (R/W)
+                "Amps": 0x1011,  # (R/W)
+                "Time_span": 0x1012,  # (R/W)
+                "Enabled": 0x1013,  # (R/W)
+            },
+            "M3": {
+                "Volts": 0x1020,  # (R/W)
+                "Amps": 0x1021,  # (R/W)
+                "Time_span": 0x1022,  # (R/W)
+                "Enabled": 0x1023,  # (R/W)
+            },
+            "M4": {
+                "Volts": 0x1030,  # (R/W)
+                "Amps": 0x1031,  # (R/W)
+                "Time_span": 0x1032,  # (R/W)
+                "Enabled": 0x1033,  # (R/W)
+            },
+            "M5": {
+                "Volts": 0x1040,  # (R/W)
+                "Amps": 0x1041,  # (R/W)
+                "Time_span": 0x1042,  # (R/W)
+                "Enabled": 0x1043,  # (R/W)
+            },
+            "M6": {
+                "Volts": 0x1050,  # (R/W)
+                "Amps": 0x1051,  # (R/W)
+                "Time_span": 0x1052,  # (R/W)
+                "Enabled": 0x1053,  # (R/W)
+            },
+        }
+
     def __init__(self, fd=None):
         if fd is None:
             logger.debug("HM305 opened without a serial obj! using defaults.")
-            fd = serial.Serial('/dev/ttyUSB0', baudrate=9600, timeout=0.1)
+            fd = serial.Serial("/dev/ttyUSB0", baudrate=9600, timeout=0.1)
         self.modbus = Modbus(fd)
         # self.v_setpoint_sw = 0
         self.i_setpoint_sw = 0
-        self.voltage = FloatSetting(self.modbus, value_addr=HM305.CMD.Voltage, setpoint_addr=HM305.CMD.Set_Voltage,
-                                    value_scalar=100.0, min_addr=HM305.CMD.Voltage_Min, max_addr=HM305.CMD.Voltage_Max)
-        self.current = FloatSetting(self.modbus, value_addr=HM305.CMD.Current, setpoint_addr=HM305.CMD.Set_Current,
-                                    value_scalar=1000.0, min_addr=HM305.CMD.Current_Min, max_addr=HM305.CMD.Current_Max)
+        self.voltage = FloatSetting(
+            self.modbus,
+            value_addr=HM305.CMD.Voltage,
+            setpoint_addr=HM305.CMD.Set_Voltage,
+            value_scalar=100.0,
+            min_addr=HM305.CMD.Voltage_Min,
+            max_addr=HM305.CMD.Voltage_Max,
+        )
+        self.current = FloatSetting(
+            self.modbus,
+            value_addr=HM305.CMD.Current,
+            setpoint_addr=HM305.CMD.Set_Current,
+            value_scalar=1000.0,
+            min_addr=HM305.CMD.Current_Min,
+            max_addr=HM305.CMD.Current_Max,
+        )
 
     def _set_val(self, addr: int, val) -> bool:
         return self.modbus.set_by_addr(addr, val)
@@ -60,7 +125,7 @@ class HM305:
         else:
             a = self._set_val(addr, val >> 16)
             if a:
-                return self._set_val(addr + 1, val & 0xffff)
+                return self._set_val(addr + 1, val & 0xFFFF)
             return False
 
     def initialize(self):
@@ -133,6 +198,25 @@ class HM305:
     @property
     def device(self):
         return self._get_val(HM305.CMD.Device)
+
+    @property
+    def memory(self):
+        """ Return a dict of dicts for each [preset memory keys][registers] """
+        memory_values = HM305.PRESET.Memory
+        for key in HM305.PRESET.Memory:
+            memory_values[key]["Volts"] = (
+                self._get_val(HM305.PRESET.Memory[key]["Volts"]) / 100.0
+            )
+            memory_values[key]["Amps"] = (
+                self._get_val(HM305.PRESET.Memory[key]["Amps"]) / 1000.0
+            )
+            memory_values[key]["Time_span"] = self._get_val(
+                HM305.PRESET.Memory[key]["Time_span"]
+            )
+            memory_values[key]["Enabled"] = self._get_val(
+                HM305.PRESET.Memory[key]["Enabled"]
+            )
+        return memory_values
 
 
 def rint(x: float) -> int:

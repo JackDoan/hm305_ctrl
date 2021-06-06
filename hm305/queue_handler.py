@@ -44,7 +44,9 @@ class HM305pFastQueueHandler:
                 if item.stale:
                     logger.debug(f"stale item! {item}")
                 elif item.uses_serial_port:
-                    logger.error(f"Bad programmer! You cannot put {item} in the fast queue!")
+                    logger.error(
+                        f"Bad programmer! You cannot put {item} in the fast queue!"
+                    )
                     item.result = "QUEUE ERROR"
                 else:
                     logger.debug(f"processing {item}")

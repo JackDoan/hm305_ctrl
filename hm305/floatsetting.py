@@ -2,9 +2,17 @@ from modbus import Modbus
 
 
 class FloatSetting:
-    def __init__(self, modbus: Modbus, value_addr: int, setpoint_addr: int, value_scalar=1.0,
-                 minimum=0.0, min_addr=None,
-                 maximum=999.0, max_addr=None, ):
+    def __init__(
+        self,
+        modbus: Modbus,
+        value_addr: int,
+        setpoint_addr: int,
+        value_scalar=1.0,
+        minimum=0.0,
+        min_addr=None,
+        maximum=999.0,
+        max_addr=None,
+    ):
         self._modbus = modbus
         self._value_address = value_addr
         self._value_scalar = value_scalar

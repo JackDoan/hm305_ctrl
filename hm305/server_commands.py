@@ -21,7 +21,7 @@ class Command:
         Sets result (if applicable) and complete before returning.
         The external command runner checks the stale flag first, not this function
         """
-        self.result = 'Not implemented'
+        self.result = "Not implemented"
         self.complete = True
 
     def result_as_string(self):
@@ -48,7 +48,7 @@ class CommandWithFloatArg(CommandWithArg):
         except ValueError as e:
             self.stale = True
             logger.error(e)
-            self.result = 'error: bad float'
+            self.result = "error: bad float"
 
     def result_as_string(self):
         return f"{self.result:2.3f}"
@@ -106,6 +106,7 @@ class SetVoltageCommand(CommandWithFloatArg):
     NOTE: This class is manually split into a SetVoltageSetpoint and a VoltageApply
     Need to find a cleaner way to do this
     """
+
     uses_serial_port = True
 
     def invoke(self, hm):
@@ -205,5 +206,3 @@ class CurrentSetpointQuery(QueryCommand):
     def invoke(self, hm):
         self.result = float(hm.current.setpoint)
         self.complete = True
-
-

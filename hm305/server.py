@@ -3,8 +3,15 @@ import socketserver
 from typing import Any
 
 from hm305.command_factory import CommandFactory
-from hm305.server_commands import SetVoltageCommand, SetVoltageSetpointCommand, VoltageApplyCommand, \
-    Command, SetCurrentCommand, SetCurrentSetpointCommand, CurrentApplyCommand
+from hm305.server_commands import (
+    SetVoltageCommand,
+    SetVoltageSetpointCommand,
+    VoltageApplyCommand,
+    Command,
+    SetCurrentCommand,
+    SetCurrentSetpointCommand,
+    CurrentApplyCommand,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +29,13 @@ class HM305pServer(socketserver.StreamRequestHandler):
     fast_q = None
     command_factory = CommandFactory()
 
-    def __init__(self, request: Any, client_address: Any, base_server: socketserver.BaseServer):
+    def __init__(
+        self, request: Any, client_address: Any, base_server: socketserver.BaseServer
+    ):
         super().__init__(request, client_address, base_server)
 
     def handle(self):
-        resp = ''
+        resp = ""
         msg = self.rfile.readline().strip().decode()
         logger.debug(f"REQ[{self.client_address[0]}]: {msg}")
         item = self.command_factory.parse(msg)
@@ -62,8 +71,8 @@ class HM305pServer(socketserver.StreamRequestHandler):
                 resp = item.result_as_string()
                 logger.debug(f"{item}")
             else:
-                resp = 'DONE\n'
+                resp = "DONE\n"
 
         else:
-            resp = 'error: cmd not found'
+            resp = "error: cmd not found"
         self.wfile.write(resp.encode())
